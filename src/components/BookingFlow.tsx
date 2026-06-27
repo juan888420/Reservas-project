@@ -38,6 +38,10 @@ export default function BookingFlow() {
     setLoading(true);
     try {
       const res = await fetch(`/api/slots?medico_id=${medicoId}`);
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Error al cargar horarios");
+      }
       const data = await res.json();
       setSlots(data);
     } catch {
@@ -104,18 +108,42 @@ export default function BookingFlow() {
       month: "short",
     });
 
+  const formatFechaLarga = (fecha: string) =>
+    new Date(fecha + "T12:00:00").toLocaleDateString("es-ES", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+
   if (success) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
+      <div className="flex flex-col items-center py-16 text-center">
         <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
           <svg className="h-8 w-8 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
         <h2 className="text-xl font-semibold">¡Cita confirmada!</h2>
-        <p className="mt-2 max-w-sm text-text-muted">
-          Recibirás un correo de confirmación en <span className="text-text">{email}</span> con los detalles y un enlace para Google Calendar.
+        <p className="mt-2 text-text-muted">
+          Recibirás un correo en <span className="text-text">{email}</span> con los detalles.
         </p>
+        {selectedMedico && selectedSlot && (
+          <div className="mt-6 w-full max-w-sm rounded-xl border border-border bg-surface-raised p-4 text-left text-sm">
+            <p className="font-medium">{selectedMedico.nombre}</p>
+            <p className="text-text-muted">{selectedMedico.especialidad}</p>
+            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-text-muted">
+              <span>{formatFechaLarga(selectedSlot.fecha)}</span>
+              <span>{selectedSlot.hora.slice(0, 5)}</span>
+              <span className="font-semibold text-accent">${Number(monto).toFixed(2)} USD</span>
+            </div>
+            {motivo && (
+              <p className="mt-3 rounded-lg bg-surface-overlay px-3 py-2 text-text-muted">
+                <span className="text-text">Motivo:</span> {motivo}
+              </p>
+            )}
+          </div>
+        )}
       </div>
     );
   }
@@ -192,6 +220,8 @@ export default function BookingFlow() {
 
           {loading ? (
             <p className="text-text-muted">Cargando horarios...</p>
+          ) : fechasDisponibles.length === 0 ? (
+            <p className="text-text-muted">No hay horarios disponibles para este médico.</p>
           ) : (
             <>
               <div className="mb-4 flex gap-2 overflow-x-auto pb-2">

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createPayPalOrder } from "@/lib/paypal";
+import { citaSchema } from "@/lib/schemas";
 
 type CrearCitaResult = {
   cita_id?: string;
@@ -10,15 +12,8 @@ type CrearCitaResult = {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const body = citaSchema.parse(await request.json());
     const { slot_id, paciente_nombre, email, motivo } = body;
-
-    if (!slot_id || !paciente_nombre || !email) {
-      return NextResponse.json(
-        { error: "slot_id, paciente_nombre y email son requeridos" },
-        { status: 400 }
-      );
-    }
 
     const supabase = createAdminClient();
 
@@ -57,6 +52,12 @@ export async function POST(request: NextRequest) {
       paypal_order_id: paypalOrder.id,
     });
   } catch (err) {
+    if (err instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Datos inválidos", details: err.issues },
+        { status: 400 }
+      );
+    }
     const message = err instanceof Error ? err.message : "Error interno";
     return NextResponse.json({ error: message }, { status: 500 });
   }

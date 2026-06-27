@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyPayPalWebhook } from "@/lib/paypal";
 import { confirmarCita } from "@/lib/citas";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { paypalWebhookSchema } from "@/lib/schemas";
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
@@ -11,7 +12,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Firma inválida" }, { status: 401 });
   }
 
-  const event = JSON.parse(body);
+  const parsed = paypalWebhookSchema.safeParse(JSON.parse(body));
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Evento inválido" }, { status: 400 });
+  }
+
+  const event = parsed.data;
 
   if (event.event_type !== "PAYMENT.CAPTURE.COMPLETED") {
     return NextResponse.json({ received: true });

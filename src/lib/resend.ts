@@ -37,8 +37,10 @@ export async function sendConfirmationEmail(params: {
       .join("\n"),
   });
 
-  await getResend().emails.send({
-    from: process.env.RESEND_FROM_EMAIL!,
+  const fromEmail = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
+
+  const result = await getResend().emails.send({
+    from: fromEmail,
     to: params.to,
     subject: `Cita confirmada con ${params.medicoNombre}`,
     html: `
@@ -50,6 +52,7 @@ export async function sendConfirmationEmail(params: {
           <tr><td style="padding: 8px 0; color: #888;">Especialidad</td><td style="padding: 8px 0; text-align: right;">${params.especialidad}</td></tr>
           <tr><td style="padding: 8px 0; color: #888;">Fecha</td><td style="padding: 8px 0; text-align: right;">${fechaFmt}</td></tr>
           <tr><td style="padding: 8px 0; color: #888;">Hora</td><td style="padding: 8px 0; text-align: right;">${params.hora.slice(0, 5)}</td></tr>
+          ${params.motivo ? `<tr><td style="padding: 8px 0; color: #888;">Motivo</td><td style="padding: 8px 0; text-align: right;">${params.motivo}</td></tr>` : ""}
           <tr><td style="padding: 8px 0; color: #888;">Monto</td><td style="padding: 8px 0; text-align: right; color: #4ade80;">$${params.monto.toFixed(2)} USD</td></tr>
         </table>
         <a href="${calendarUrl}" style="display: inline-block; margin-top: 28px; padding: 12px 24px; background: #6366f1; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 600;">
@@ -59,4 +62,10 @@ export async function sendConfirmationEmail(params: {
       </div>
     `,
   });
+
+  if (result.error) {
+    throw new Error(`Resend error: ${result.error.message}`);
+  }
+
+  return result;
 }

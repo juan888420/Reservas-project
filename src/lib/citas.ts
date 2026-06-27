@@ -34,16 +34,20 @@ export async function confirmarCita(citaId: string, captureId?: string) {
     return { alreadyConfirmed: true };
   }
 
-  await sendConfirmationEmail({
-    to: result.email,
-    pacienteNombre: result.paciente_nombre,
-    medicoNombre: result.medico_nombre,
-    especialidad: result.especialidad,
-    fecha: result.fecha,
-    hora: result.hora,
-    monto: Number(result.monto),
-    motivo: result.motivo,
-  });
+  try {
+    await sendConfirmationEmail({
+      to: result.email,
+      pacienteNombre: result.paciente_nombre,
+      medicoNombre: result.medico_nombre,
+      especialidad: result.especialidad,
+      fecha: result.fecha,
+      hora: result.hora,
+      monto: Number(result.monto),
+      motivo: result.motivo,
+    });
+  } catch (emailErr) {
+    console.error("Error enviando correo de confirmación:", emailErr);
+  }
 
   return { alreadyConfirmed: false };
 }
