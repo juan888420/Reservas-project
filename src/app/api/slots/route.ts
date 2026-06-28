@@ -74,13 +74,14 @@ export async function GET(request: NextRequest) {
   let { data, error } = await query;
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[GET /api/slots]", error);
+    return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 
   if (!data?.length) {
     await generarSlots(medicoId);
 
-    const retry = supabase
+    let retry = supabase
       .from("slots")
       .select("id, medico_id, fecha, hora, disponible")
       .eq("medico_id", medicoId)
@@ -88,12 +89,13 @@ export async function GET(request: NextRequest) {
       .order("fecha")
       .order("hora");
 
-    if (fecha) retry.eq("fecha", fecha);
-    if (soloDisponibles) retry.eq("disponible", true);
+    if (fecha) retry = retry.eq("fecha", fecha);
+    if (soloDisponibles) retry = retry.eq("disponible", true);
 
     const { data: retryData, error: retryError } = await retry;
     if (retryError) {
-      return NextResponse.json({ error: retryError.message }, { status: 500 });
+      console.error("[GET /api/slots] retry", retryError);
+      return NextResponse.json({ error: "Error interno" }, { status: 500 });
     }
     data = retryData;
   }

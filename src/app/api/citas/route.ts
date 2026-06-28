@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createPayPalOrder } from "@/lib/paypal";
 import { citaSchema } from "@/lib/schemas";
+import { citasRatelimit, getClientIp } from "@/lib/rate-limit";
 
 type CrearCitaResult = {
   cita_id?: string;
@@ -11,6 +12,14 @@ type CrearCitaResult = {
 };
 
 export async function POST(request: NextRequest) {
+  const { success } = await citasRatelimit.limit(getClientIp(request));
+  if (!success) {
+    return NextResponse.json(
+      { error: "Demasiadas solicitudes. Intenta de nuevo en un minuto." },
+      { status: 429 }
+    );
+  }
+
   try {
     const body = citaSchema.parse(await request.json());
     const { slot_id, paciente_nombre, email, motivo } = body;
@@ -58,7 +67,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    const message = err instanceof Error ? err.message : "Error interno";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("[POST /api/citas]", err);
+    return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }

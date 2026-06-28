@@ -24,7 +24,7 @@ export default function MedicoLoginPage() {
     });
 
     if (authError) {
-      setError(authError.message);
+      setError("Error al iniciar sesión. Verifica tu correo y contraseña.");
       setLoading(false);
       return;
     }
@@ -56,6 +56,7 @@ export default function MedicoLoginPage() {
             <label className="mb-1.5 block text-sm text-text-muted">Correo</label>
             <input
               type="email"
+              placeholder="Correo"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -67,6 +68,7 @@ export default function MedicoLoginPage() {
             <label className="mb-1.5 block text-sm text-text-muted">Contraseña</label>
             <input
               type="password"
+              placeholder="Contraseña"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required

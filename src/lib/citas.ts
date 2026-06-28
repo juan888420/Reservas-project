@@ -26,6 +26,10 @@ export async function confirmarCita(citaId: string, captureId?: string) {
 
   const result = data as ConfirmarCitaResult;
 
+  if (result.error === 'cita_no_confirmable') {
+    return { alreadyConfirmed: false, nonConfirmable: true };
+  }
+
   if (result.error) {
     throw new Error(result.error);
   }

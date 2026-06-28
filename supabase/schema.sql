@@ -38,9 +38,13 @@ CREATE TABLE IF NOT EXISTS citas (
   estado            TEXT NOT NULL DEFAULT 'pendiente',
   paypal_order_id   TEXT,
   paypal_capture_id TEXT,
+  expires_at        TIMESTAMPTZ,
   created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Añadir expires_at si la tabla ya existía (idempotente)
+ALTER TABLE citas ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ;
 
 -- ---------------------------------------------------------------------------
 -- 2. Constraints (idempotentes)
@@ -53,10 +57,10 @@ DO $$ BEGIN
 END $$;
 
 DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'citas_estado_valido') THEN
-    ALTER TABLE citas ADD CONSTRAINT citas_estado_valido
-      CHECK (estado IN ('pendiente', 'confirmada', 'cancelada'));
-  END IF;
+  -- Drop and recreate to support the new 'expirada' state (idempotente)
+  ALTER TABLE citas DROP CONSTRAINT IF EXISTS citas_estado_valido;
+  ALTER TABLE citas ADD CONSTRAINT citas_estado_valido
+    CHECK (estado IN ('pendiente', 'confirmada', 'cancelada', 'expirada'));
 END $$;
 
 DO $$ BEGIN
@@ -104,6 +108,11 @@ CREATE INDEX IF NOT EXISTS idx_citas_confirmadas
 CREATE INDEX IF NOT EXISTS idx_citas_pendientes
   ON citas (created_at)
   WHERE estado = 'pendiente';
+
+-- Citas expiradas (auditoría / reportes de abandono)
+CREATE INDEX IF NOT EXISTS idx_citas_expiradas
+  ON citas (expires_at)
+  WHERE estado = 'expirada';
 
 -- PayPal lookups (partial)
 CREATE INDEX IF NOT EXISTS idx_citas_paypal_order
@@ -185,8 +194,16 @@ BEGIN
     RETURN json_build_object('error', 'slot_ocupado');
   END IF;
 
-  INSERT INTO citas (slot_id, paciente_nombre, email, motivo, monto, estado)
-  VALUES (p_slot_id, p_paciente_nombre, p_email, p_motivo, v_tarifa, 'pendiente')
+  -- Liberar reservas pendientes expiradas para este slot (conserva historial)
+  UPDATE citas
+  SET estado = 'expirada'
+  WHERE slot_id = p_slot_id
+    AND estado = 'pendiente'
+    AND expires_at IS NOT NULL
+    AND expires_at < NOW();
+
+  INSERT INTO citas (slot_id, paciente_nombre, email, motivo, monto, estado, expires_at)
+  VALUES (p_slot_id, p_paciente_nombre, p_email, p_motivo, v_tarifa, 'pendiente', NOW() + INTERVAL '15 minutes')
   RETURNING id INTO v_cita_id;
 
   RETURN json_build_object('cita_id', v_cita_id, 'monto', v_tarifa);
@@ -222,6 +239,8 @@ BEGIN
 
   IF v_cita.estado = 'confirmada' THEN
     v_already := TRUE;
+  ELSIF v_cita.estado IN ('cancelada', 'expirada') THEN
+    RETURN json_build_object('error', 'cita_no_confirmable');
   ELSE
     UPDATE citas
     SET estado = 'confirmada',

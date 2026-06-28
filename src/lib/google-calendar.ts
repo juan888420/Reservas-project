@@ -25,6 +25,12 @@ export const getTokensFromCode = async (code: string) => {
   return tokens;
 };
 
+export const getGoogleUserId = async (accessToken: string): Promise<string> => {
+  const tokenInfo = await oauth2Client.getTokenInfo(accessToken);
+  if (!tokenInfo.sub) throw new Error("Google token inválido: falta sub");
+  return tokenInfo.sub;
+};
+
 export const createCalendarEvent = async (
   accessToken: string,
   eventData: {

@@ -3,8 +3,17 @@ import { z } from "zod";
 import { capturePayPalOrder } from "@/lib/paypal";
 import { confirmarCita } from "@/lib/citas";
 import { paypalCaptureSchema } from "@/lib/schemas";
+import { captureRatelimit, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
+  const { success } = await captureRatelimit.limit(getClientIp(request));
+  if (!success) {
+    return NextResponse.json(
+      { error: "Demasiadas solicitudes. Intenta de nuevo en un minuto." },
+      { status: 429 }
+    );
+  }
+
   try {
     const { orderId } = paypalCaptureSchema.parse(await request.json());
 
@@ -28,7 +37,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    const message = err instanceof Error ? err.message : "Error interno";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("[POST /api/paypal/capture]", err);
+    return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }

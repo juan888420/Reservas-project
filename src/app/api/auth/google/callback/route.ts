@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getTokensFromCode } from "@/lib/google-calendar";
+import { getTokensFromCode, getGoogleUserId } from "@/lib/google-calendar";
 import { createClient } from "@/lib/supabase/server";
 import { googleCallbackSchema } from "@/lib/schemas";
 
@@ -19,7 +19,17 @@ export async function GET(request: NextRequest) {
 
   try {
     const tokens = await getTokensFromCode(code);
-    const supabase = await createClient();
+
+    if (!tokens.access_token) {
+      return NextResponse.redirect(
+        new URL("/medico/panel?error=token_missing", request.nextUrl.origin)
+      );
+    }
+
+    const [googleUserId, supabase] = await Promise.all([
+      getGoogleUserId(tokens.access_token),
+      createClient(),
+    ]);
 
     const {
       data: { user },
@@ -44,8 +54,8 @@ export async function GET(request: NextRequest) {
       .from("google_calendar_integrations")
       .upsert({
         medico_id: medico.id,
-        google_user_id: tokens.scope || "",
-        access_token: tokens.access_token || "",
+        google_user_id: googleUserId,
+        access_token: tokens.access_token,
         refresh_token: tokens.refresh_token || null,
         token_expiry: tokens.expiry_date
           ? new Date(tokens.expiry_date).toISOString()

@@ -31,7 +31,7 @@ export default function BookingFlow() {
     fetch("/api/medicos")
       .then((r) => r.json())
       .then(setMedicos)
-      .catch(() => setError("No se pudieron cargar los médicos"));
+      .catch(() => setError("Error al cargar los médicos"));
   }, []);
 
   const loadSlots = useCallback(async (medicoId: string) => {

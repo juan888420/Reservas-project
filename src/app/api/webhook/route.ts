@@ -54,11 +54,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Cita no encontrada" }, { status: 404 });
     }
 
-    await confirmarCita(citaId, captureId);
+    const result = await confirmarCita(citaId, captureId);
+
+    if (result.nonConfirmable) {
+      console.warn(`Webhook: cita ${citaId} no confirmable (expirada/cancelada). Revisar reembolso.`);
+    }
 
     return NextResponse.json({ success: true });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Error interno";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("[POST /api/webhook]", err);
+    return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }
