@@ -71,7 +71,9 @@ export async function GET(request: NextRequest) {
     query = query.eq("disponible", true);
   }
 
-  let { data, error } = await query;
+  const { data: initialData, error } = await query;
+  let data = initialData;
+
 
   if (error) {
     console.error("[GET /api/slots]", error);
