@@ -3,7 +3,13 @@ const PAYPAL_API =
     ? "https://api-m.paypal.com"
     : "https://api-m.sandbox.paypal.com";
 
+let cachedToken: { value: string; expiresAt: number } | null = null;
+
 async function getAccessToken(): Promise<string> {
+  if (cachedToken && cachedToken.expiresAt > Date.now()) {
+    return cachedToken.value;
+  }
+
   const auth = Buffer.from(
     `${process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID}:${process.env.PAYPAL_CLIENT_SECRET}`
   ).toString("base64");
@@ -19,7 +25,13 @@ async function getAccessToken(): Promise<string> {
 
   if (!res.ok) throw new Error("PayPal auth failed");
   const data = await res.json();
-  return data.access_token;
+
+  cachedToken = {
+    value: data.access_token,
+    expiresAt: Date.now() + (data.expires_in - 60) * 1000,
+  };
+
+  return cachedToken.value;
 }
 
 export async function createPayPalOrder(amount: number, citaId: string) {
