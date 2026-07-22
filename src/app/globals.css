@@ -1,17 +1,33 @@
 @import "tailwindcss";
 
 @theme {
+  /* Surfaces — one hue, lightness steps only (whisper-quiet elevation) */
   --color-surface: #0a0a0b;
   --color-surface-raised: #141416;
   --color-surface-overlay: #1c1c1f;
-  --color-border: #2a2a2e;
-  --color-border-subtle: #1f1f23;
+  --color-surface-hover: #232327;
+
+  /* Borders — low-opacity, findable but not loud */
+  --color-border: rgba(255, 255, 255, 0.09);
+  --color-border-subtle: rgba(255, 255, 255, 0.05);
+  --color-border-strong: rgba(255, 255, 255, 0.14);
+
+  /* Text — four levels of hierarchy */
   --color-text: #f4f4f5;
-  --color-text-muted: #71717a;
+  --color-text-muted: #a1a1aa;
+  --color-text-subtle: #71717a;
+
+  /* Accent — trust, used sparingly (~10%) */
   --color-accent: #818cf8;
   --color-accent-hover: #6366f1;
+  --color-accent-soft: rgba(129, 140, 248, 0.12);
+
   --color-success: #4ade80;
   --color-danger: #f87171;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
 }
 
 * {
@@ -28,6 +44,158 @@ body {
   min-height: 100dvh;
 }
 
+h1,
+h2,
+h3,
+h4 {
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
 ::selection {
   background: color-mix(in srgb, var(--color-accent) 40%, transparent);
+}
+
+/* Scrollbars — thin, quiet */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong) transparent;
+}
+*::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: 9999px;
+}
+
+/* ---------------------------------------------------------------------------
+   Motion primitives (CSS-only, GPU-composited)
+   --------------------------------------------------------------------------- */
+
+@keyframes fade-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-step {
+  animation: fade-slide-up 0.42s var(--ease-out) both;
+}
+
+.animate-fade {
+  animation: fade-in 0.5s var(--ease-out) both;
+}
+
+.animate-pop {
+  animation: pop-in 0.5s var(--ease-out) both;
+}
+
+/* Staggered children — apply .stagger to a container */
+.stagger > * {
+  animation: fade-slide-up 0.44s var(--ease-out) both;
+}
+.stagger > *:nth-child(1) {
+  animation-delay: 0.03s;
+}
+.stagger > *:nth-child(2) {
+  animation-delay: 0.08s;
+}
+.stagger > *:nth-child(3) {
+  animation-delay: 0.13s;
+}
+.stagger > *:nth-child(4) {
+  animation-delay: 0.18s;
+}
+.stagger > *:nth-child(5) {
+  animation-delay: 0.23s;
+}
+.stagger > *:nth-child(6) {
+  animation-delay: 0.28s;
+}
+.stagger > *:nth-child(7) {
+  animation-delay: 0.33s;
+}
+.stagger > *:nth-child(8) {
+  animation-delay: 0.38s;
+}
+
+/* Skeleton shimmer */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-surface-overlay);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.04),
+    transparent
+  );
+  animation: shimmer 1.4s infinite;
+}
+
+/* Press feedback for interactive elements opting in */
+.press {
+  transition:
+    transform 0.12s var(--ease-out),
+    background-color 0.16s var(--ease-out),
+    border-color 0.16s var(--ease-out),
+    box-shadow 0.16s var(--ease-out);
+}
+.press:active {
+  transform: scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-step,
+  .animate-fade,
+  .animate-pop,
+  .stagger > *,
+  .skeleton::after {
+    animation: none !important;
+  }
+  .press:active {
+    transform: none;
+  }
 }

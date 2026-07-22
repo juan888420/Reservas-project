@@ -34,17 +34,17 @@ export default function LandingPage() {
   return (
     <main className="min-h-dvh">
       {/* Header */}
-      <header className="border-b border-border-subtle px-4 py-5 sm:px-6">
-        <div className="mx-auto flex max-w-5xl items-center justify-between">
+      <header className="sticky top-0 z-10 border-b border-border-subtle bg-surface/80 backdrop-blur-md">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4 sm:px-6">
           <div>
             <h1 className="text-lg font-bold tracking-tight">
               Medi<span className="text-accent">Reserva</span>
             </h1>
-            <p className="text-xs text-text-muted">Citas médicas en línea</p>
+            <p className="text-xs text-text-subtle">Citas médicas en línea</p>
           </div>
           <Link
             href="/medico/login"
-            className="rounded-lg border border-border px-3 py-1.5 text-xs text-text-muted transition-colors hover:border-accent/50 hover:text-text"
+            className="press rounded-lg border border-border px-3 py-1.5 text-xs text-text-muted transition-colors hover:border-border-strong hover:text-text"
           >
             Acceso médico
           </Link>
@@ -52,36 +52,38 @@ export default function LandingPage() {
       </header>
 
       {/* Hero */}
-      <section className="relative overflow-hidden px-4 pb-20 pt-16 sm:px-6 sm:pt-24">
+      <section className="relative overflow-hidden px-4 pb-24 pt-20 sm:px-6 sm:pt-28">
         <div className="pointer-events-none absolute inset-0">
-          <div className="absolute left-1/2 top-0 h-[480px] w-[480px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent/8 blur-3xl" />
+          <div className="absolute left-1/2 top-0 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent/10 blur-[120px]" />
           <div className="absolute bottom-0 right-0 h-64 w-64 translate-x-1/3 translate-y-1/3 rounded-full bg-accent/5 blur-3xl" />
         </div>
 
-        <div className="relative mx-auto max-w-2xl text-center">
-          <span className="inline-block rounded-full border border-accent/20 bg-accent/10 px-3 py-1 text-xs font-medium text-accent">
+        <div className="animate-fade relative mx-auto max-w-2xl text-center">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/20 bg-accent-soft px-3 py-1 text-xs font-medium text-accent">
+            <span className="h-1.5 w-1.5 rounded-full bg-accent" />
             Sin registro · Confirmación inmediata
           </span>
 
-          <h2 className="mt-6 text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
-            Tu cita médica,{" "}
+          <h2 className="mt-6 text-4xl font-bold leading-[1.1] tracking-tight sm:text-6xl">
+            Tu cita médica,
+            <br />
             <span className="text-accent">a un clic</span>
           </h2>
 
-          <p className="mx-auto mt-5 max-w-md text-base leading-relaxed text-text-muted sm:text-lg">
+          <p className="mx-auto mt-6 max-w-md text-base leading-relaxed text-text-muted sm:text-lg">
             Agenda con especialistas de confianza, paga en línea y recibe tu confirmación al correo.
           </p>
 
           <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
             <Link
               href="/reservar"
-              className="w-full rounded-xl bg-accent px-8 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-accent-hover sm:w-auto"
+              className="press w-full rounded-xl bg-accent px-8 py-3.5 text-sm font-semibold text-white hover:bg-accent-hover sm:w-auto"
             >
               Agendar cita
             </Link>
             <a
               href="#como-funciona"
-              className="w-full rounded-xl border border-border px-8 py-3.5 text-sm font-medium text-text-muted transition-colors hover:border-accent/40 hover:text-text sm:w-auto"
+              className="press w-full rounded-xl border border-border px-8 py-3.5 text-sm font-medium text-text-muted transition-colors hover:border-border-strong hover:text-text sm:w-auto"
             >
               Cómo funciona
             </a>
@@ -90,25 +92,25 @@ export default function LandingPage() {
       </section>
 
       {/* Features */}
-      <section id="como-funciona" className="border-t border-border-subtle px-4 py-16 sm:px-6">
+      <section id="como-funciona" className="border-t border-border-subtle px-4 py-20 sm:px-6">
         <div className="mx-auto max-w-5xl">
-          <p className="mb-2 text-center text-xs font-medium uppercase tracking-widest text-text-muted">
+          <p className="mb-2 text-center text-xs font-medium uppercase tracking-widest text-text-subtle">
             Cómo funciona
           </p>
-          <h3 className="mb-10 text-center text-2xl font-semibold">
+          <h3 className="mb-12 text-center text-2xl font-semibold tracking-tight sm:text-3xl">
             Simple, rápido y seguro
           </h3>
 
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="stagger grid gap-4 sm:grid-cols-3">
             {features.map((f, i) => (
               <div
                 key={f.title}
-                className="rounded-xl border border-border bg-surface-raised p-6"
+                className="group rounded-2xl border border-border bg-surface-raised p-6 transition-colors hover:border-border-strong"
               >
-                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10 text-accent">
+                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-accent-soft text-accent">
                   {f.icon}
                 </div>
-                <p className="mb-1 text-xs font-medium text-text-muted">Paso {i + 1}</p>
+                <p className="mb-1 text-xs font-medium tabular-nums text-text-subtle">Paso {i + 1}</p>
                 <h4 className="mb-2 font-semibold">{f.title}</h4>
                 <p className="text-sm leading-relaxed text-text-muted">{f.desc}</p>
               </div>
@@ -118,22 +120,25 @@ export default function LandingPage() {
       </section>
 
       {/* CTA */}
-      <section className="border-t border-border-subtle px-4 py-16 sm:px-6">
-        <div className="mx-auto max-w-lg rounded-2xl border border-border bg-surface-raised p-8 text-center">
-          <h3 className="text-xl font-semibold">¿Listo para tu consulta?</h3>
-          <p className="mt-2 text-sm text-text-muted">
-            No necesitas crear cuenta. Solo elige tu horario y confirma con PayPal.
-          </p>
-          <Link
-            href="/reservar"
-            className="mt-6 inline-block w-full rounded-xl bg-accent px-8 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-accent-hover sm:w-auto"
-          >
-            Agendar cita ahora
-          </Link>
+      <section className="border-t border-border-subtle px-4 py-20 sm:px-6">
+        <div className="relative mx-auto max-w-lg overflow-hidden rounded-3xl border border-border bg-surface-raised p-8 text-center sm:p-10">
+          <div className="pointer-events-none absolute left-1/2 top-0 h-40 w-40 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent/10 blur-3xl" />
+          <div className="relative">
+            <h3 className="text-xl font-semibold tracking-tight sm:text-2xl">¿Listo para tu consulta?</h3>
+            <p className="mx-auto mt-2 max-w-sm text-sm text-text-muted">
+              No necesitas crear cuenta. Solo elige tu horario y confirma con PayPal.
+            </p>
+            <Link
+              href="/reservar"
+              className="press mt-7 inline-block w-full rounded-xl bg-accent px-8 py-3.5 text-sm font-semibold text-white hover:bg-accent-hover sm:w-auto"
+            >
+              Agendar cita ahora
+            </Link>
+          </div>
         </div>
       </section>
 
-      <footer className="border-t border-border-subtle px-4 py-6 text-center text-xs text-text-muted">
+      <footer className="border-t border-border-subtle px-4 py-8 text-center text-xs text-text-subtle">
         © {new Date().getFullYear()} MediReserva
       </footer>
     </main>
