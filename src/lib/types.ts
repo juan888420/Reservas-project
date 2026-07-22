@@ -20,7 +20,7 @@ export type Cita = {
   email: string;
   motivo: string | null;
   monto: number;
-  estado: "pendiente" | "confirmada" | "cancelada";
+  estado: "pendiente" | "confirmada" | "cancelada" | "expirada";
   paypal_order_id: string | null;
   created_at: string;
 };

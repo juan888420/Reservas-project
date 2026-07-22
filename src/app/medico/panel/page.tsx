@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import LogoutButton from "@/components/LogoutButton";
+import CitasPanel, { type PanelCita } from "@/components/CitasPanel";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -34,36 +35,56 @@ export default async function MedicoPanelPage() {
     );
   }
 
-  const { data: citas } = await supabase
+  const { data: citasRaw } = await supabase
     .from("citas")
     .select(
       `
-      id, paciente_nombre, email, motivo, monto, estado, created_at,
+      id, paciente_nombre, email, motivo, monto, estado,
       slot:slots!inner ( fecha, hora, medico_id )
     `
     )
-    .eq("estado", "confirmada")
+    .in("estado", ["confirmada", "cancelada", "expirada"])
     .eq("slot.medico_id", medico.id)
     .order("created_at", { ascending: false });
 
-  const formatFecha = (fecha: string) =>
-    new Date(fecha + "T12:00:00").toLocaleDateString("es-ES", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
+  const citas: PanelCita[] = (citasRaw ?? []).map((cita) => {
+    const slotRaw = cita.slot as
+      | { fecha: string; hora: string }
+      | { fecha: string; hora: string }[];
+    const slot = Array.isArray(slotRaw) ? slotRaw[0] : slotRaw;
+    return {
+      id: cita.id,
+      paciente_nombre: cita.paciente_nombre,
+      email: cita.email,
+      motivo: cita.motivo,
+      monto: Number(cita.monto),
+      estado: cita.estado as PanelCita["estado"],
+      fecha: slot.fecha,
+      hora: slot.hora,
+    };
+  });
+
+  const inicial = medico.nombre.replace(/^(Dr|Dra)\.?\s+/i, "").trim()[0] ?? "M";
+  const confirmadasCount = citas.filter((c) => c.estado === "confirmada").length;
+  const total = citas
+    .filter((c) => c.estado === "confirmada")
+    .reduce((sum, c) => sum + c.monto, 0);
 
   return (
     <main className="min-h-dvh">
-      <header className="border-b border-border-subtle px-4 py-5 sm:px-6">
-        <div className="mx-auto flex max-w-2xl items-center justify-between">
-          <div>
-            <h1 className="text-lg font-bold">{medico.nombre}</h1>
-            <p className="text-xs text-text-muted">{medico.especialidad}</p>
+      <header className="sticky top-0 z-10 border-b border-border-subtle bg-surface/80 backdrop-blur-md">
+        <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-4 sm:px-6">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-soft text-sm font-semibold uppercase text-accent ring-1 ring-inset ring-accent/20">
+              {inicial}
+            </span>
+            <div className="min-w-0">
+              <h1 className="truncate text-base font-semibold leading-tight">{medico.nombre}</h1>
+              <p className="truncate text-xs text-text-muted">{medico.especialidad}</p>
+            </div>
           </div>
           <div className="flex items-center gap-3">
-            <Link href="/" className="text-xs text-text-muted hover:text-text">
+            <Link href="/" className="text-xs text-text-muted transition-colors hover:text-text">
               Inicio
             </Link>
             <LogoutButton />
@@ -71,51 +92,20 @@ export default async function MedicoPanelPage() {
         </div>
       </header>
 
-      <section className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
-        <h2 className="mb-6 text-sm font-medium uppercase tracking-wider text-text-muted">
-          Citas confirmadas ({citas?.length ?? 0})
-        </h2>
+      <section className="animate-fade mx-auto max-w-2xl px-4 py-8 sm:px-6">
+        {/* Stat tiles */}
+        <div className="mb-8 grid grid-cols-2 gap-3">
+          <div className="rounded-2xl border border-border bg-surface-raised p-5">
+            <p className="text-xs font-medium uppercase tracking-wider text-text-subtle">Citas confirmadas</p>
+            <p className="mt-2 text-3xl font-semibold tabular-nums">{confirmadasCount}</p>
+          </div>
+          <div className="rounded-2xl border border-border bg-surface-raised p-5">
+            <p className="text-xs font-medium uppercase tracking-wider text-text-subtle">Ingresos</p>
+            <p className="mt-2 text-3xl font-semibold tabular-nums text-accent">${total.toFixed(0)}</p>
+          </div>
+        </div>
 
-        {!citas?.length ? (
-          <div className="rounded-xl border border-border-subtle bg-surface-raised p-8 text-center">
-            <p className="text-text-muted">No hay citas confirmadas aún.</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {citas.map((cita) => {
-              const slotRaw = cita.slot as
-                | { fecha: string; hora: string }
-                | { fecha: string; hora: string }[];
-              const slot = Array.isArray(slotRaw) ? slotRaw[0] : slotRaw;
-              return (
-                <div
-                  key={cita.id}
-                  className="rounded-xl border border-border bg-surface-raised p-4"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="font-medium">{cita.paciente_nombre}</p>
-                      <p className="text-sm text-text-muted">{cita.email}</p>
-                    </div>
-                    <span className="shrink-0 rounded-lg bg-success/10 px-2.5 py-1 text-xs font-medium text-success">
-                      Confirmada
-                    </span>
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-text-muted">
-                    <span>{formatFecha(slot.fecha)}</span>
-                    <span>{slot.hora.slice(0, 5)}</span>
-                    <span>${Number(cita.monto).toFixed(2)}</span>
-                  </div>
-                  {cita.motivo && (
-                    <p className="mt-3 rounded-lg bg-surface-overlay px-3 py-2 text-sm text-text-muted">
-                      <span className="text-text">Motivo:</span> {cita.motivo}
-                    </p>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
+        <CitasPanel citas={citas} />
       </section>
     </main>
   );
